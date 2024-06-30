@@ -4,7 +4,7 @@
 #
 # Author: Simone Machetti - simone.machetti@epfl.ch
 
-RAM_BLOCK_SIZE = 16
+RAM_BLOCK_SIZE = 1
 
 VX_CC  = $(RISCV_TOOLCHAIN_PATH)/bin/riscv32-unknown-elf-gcc
 VX_DP  = $(RISCV_TOOLCHAIN_PATH)/bin/riscv32-unknown-elf-objdump
