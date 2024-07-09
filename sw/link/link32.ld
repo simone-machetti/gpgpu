@@ -10,12 +10,13 @@ ENTRY(_start)
 
 MEMORY
 {
-  CODE_RAM (RWX) : ORIGIN = 0x00000000 , LENGTH = 0x7C00
-  ARGS_RAM (RW)  : ORIGIN = 0x00007C00 , LENGTH = 0x0400
+  INSTR_RAM (RWX) : ORIGIN = 0x00000000 , LENGTH = 0x08000
+  DATA_RAM  (RWX) : ORIGIN = 0X00008000 , LENGTH = 0X1FC00
+  ARGS_RAM  (RWX) : ORIGIN = 0x00027C00 , LENGTH = 0x00400
 }
 
 __stack = ORIGIN(CODE_RAM) + LENGTH(CODE_RAM);
-__stack_size = 2K;
+__stack_size = 32K;
 
 SECTIONS
 {
@@ -24,46 +25,50 @@ SECTIONS
     . = ALIGN(4);
     *(.start*)
     . = ALIGN(4);
-  } > CODE_RAM
+  } > INSTR_RAM
 
   .text :
   {
     . = ALIGN(4);
     *(.text*)
     . = ALIGN(4);
-  } > CODE_RAM
+  } > INSTR_RAM
 
   .data :
   {
     . = ALIGN(4);
     *(.data*)
     . = ALIGN(4);
-  } > CODE_RAM
+  } > DATA_RAM
 
   .rodata :
   {
     . = ALIGN(4);
     *(.rodata*)
     . = ALIGN(4);
-  } > CODE_RAM
+  } > DATA_RAM
 
   .bss :
   {
     . = ALIGN(4);
     *(.bss*)
     . = ALIGN(4);
-  } > CODE_RAM
+  } > DATA_RAM
 
   .stack :
   {
     . = ALIGN(4);
     . = . + __stack_size;
     . = ALIGN(4);
-  } > CODE_RAM
+  } > DATA_RAM
 
   .args : {
     . = ALIGN(4);
     *(.args)
     . = ALIGN(4);
   } > ARGS_RAM
+
+  /DISCARD/ : {
+    *(*)
+  }
 }

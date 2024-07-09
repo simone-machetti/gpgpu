@@ -4,29 +4,28 @@
 //
 // Author: Simone Machetti - simone.machetti@epfl.ch
 
-`define RAM_SIZE_WORD 32768
-
-`define RAM_DONE_ADDR 7936
+`define RAM_SIZE_BYTE 163840 // I: 32KB + D: 4 x 32KB = 160KB
+`define RAM_DONE_WORD 40704
 
 `define IN_FILE  "$GPGPU_HOME/hw/imp/sim/input/kernel.mem"
 `define OUT_FILE "$GPGPU_HOME/hw/imp/sim/output/output.mem"
 
-task init_ram;
+task init_mem;
 begin
     int i;
-    for (i=0; i<`RAM_SIZE_WORD; i++) begin
+    for (i=0; i<`RAM_SIZE_BYTE/4; i++) begin
         testbench.dual_port_ram_i.mem_array[i] = 0;
     end
     $readmemh(`IN_FILE, testbench.dual_port_ram_i.mem_array);
 end
 endtask
 
-task dump_ram;
+task dump_mem;
 begin
     int fd;
     int i;
     fd = $fopen(`OUT_FILE, "w");
-    for (i=0; i<`RAM_SIZE_WORD; i++) begin
+    for (i=0; i<`RAM_SIZE_BYTE/4; i++) begin
         $fdisplay(fd, "%X", testbench.dual_port_ram_i.mem_array[i]);
     end
 end
@@ -50,8 +49,8 @@ begin
 end
 endtask
 
-module testbench (
-);
+module testbench;
+
     logic clk;
     logic rst_n;
 
@@ -71,7 +70,7 @@ module testbench (
     );
 
     dual_port_ram # (
-        .MEM_SIZE_WORD (`RAM_SIZE_WORD)
+        .MEM_SIZE_WORD (`RAM_SIZE_BYTE/4)
     ) dual_port_ram_i (
         .clk_i         (clk),
         .rst_ni        (rst_n),
@@ -81,13 +80,12 @@ module testbench (
         .data_mem_rsp  (data_rsp)
     );
 
-    real clk_freq   = 100;
     real clk_period = 1000;
 
     initial begin
         rst_n = 1'b0;
         init_vcd;
-        init_ram;
+        init_mem;
         start_vcd;
         #(clk_period*100);
         #(clk_period/4);
@@ -99,9 +97,10 @@ module testbench (
         #(clk_period/2);
         clk = 1'b1;
         #(clk_period/2);
-        if(testbench.dual_port_ram_i.mem_array[`RAM_DONE_ADDR][31:0] == 1) begin
+
+        if(testbench.dual_port_ram_i.mem_array[`RAM_DONE_WORD][31:0] == 1) begin
             stop_vcd;
-            dump_ram;
+            dump_mem;
             $stop;
         end
     end

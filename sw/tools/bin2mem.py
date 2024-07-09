@@ -7,14 +7,15 @@
 import binascii
 import sys
 
-block_size = int(sys.argv[1])
-in_file_path  = "{}".format(sys.argv[2])
-out_file_path  = "{}".format(sys.argv[3])
+in_file_path  = "{}".format(sys.argv[1])
+out_file_path = "{}".format(sys.argv[2])
 
-tmp = []
-out = []
-n = 0
-with open("{}/kernel.bin".format(in_file_path), 'rb') as fi:
+block_size = 1
+tmp        = []
+out        = []
+n          = 0
+
+with open(in_file_path, 'rb') as fi:
 
 	while True:
 		byte_0 = fi.read(1).hex()
@@ -28,9 +29,9 @@ with open("{}/kernel.bin".format(in_file_path), 'rb') as fi:
 		n = n + 1
 
 	blocks = int(n / block_size)
-	rest = n % block_size
+	rest   = n % block_size
 
-	with open("{}/kernel.mem".format(out_file_path), 'w') as file:
+	with open(out_file_path, 'w') as file:
 		for i in range(blocks):
 			for j in range(block_size):
 				out.append(tmp[i * block_size + block_size - 1 - j])

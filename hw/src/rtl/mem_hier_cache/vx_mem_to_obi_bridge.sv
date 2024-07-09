@@ -6,7 +6,7 @@
 
 `include "VX_define.vh"
 
-module obi_bridge #(
+module vx_mem_to_obi_bridge #(
     parameter TAG_WIDTH_BIT = 1
 )(
     input logic clk_i,
@@ -15,8 +15,8 @@ module obi_bridge #(
     VX_mem_req_if.slave  vx_mem_req,
     VX_mem_rsp_if.master vx_mem_rsp,
 
-    obi_req_if.master obi_mem_req,
-    obi_rsp_if.slave  obi_mem_rsp
+    obi_req_if.master obi_req,
+    obi_rsp_if.slave  obi_rsp
 );
 
     typedef enum logic [1:0] {IDLE, OBI_SEND_REQ, OBI_WAIT_RSP, VX_SEND_RSP} state_t;
@@ -43,7 +43,7 @@ module obi_bridge #(
     logic store_obi;
 
     logic vx_mem_req_ready;
-    logic obi_mem_req_req;
+    logic obi_req_req;
     logic vx_mem_rsp_valid;
 
     /*
@@ -72,10 +72,10 @@ module obi_bridge #(
     assign next_vx_data   = store_vx ? vx_mem_req.data   : curr_vx_data;
     assign next_vx_tag    = store_vx ? vx_mem_req.tag    : curr_vx_tag;
 
-    assign obi_mem_req.we    = curr_vx_rw;
-    assign obi_mem_req.be    = curr_vx_byteen;
-    assign obi_mem_req.addr  = curr_vx_addr;
-    assign obi_mem_req.wdata = curr_vx_data;
+    assign obi_req.we    = curr_vx_rw;
+    assign obi_req.be    = curr_vx_byteen;
+    assign obi_req.addr  = curr_vx_addr;
+    assign obi_req.wdata = curr_vx_data;
 
     assign vx_mem_rsp.tag = curr_vx_tag;
 
@@ -89,7 +89,7 @@ module obi_bridge #(
             curr_obi_rdata <= next_obi_rdata;
     end
 
-    assign next_obi_rdata = store_obi ? obi_mem_rsp.rdata : curr_obi_rdata;
+    assign next_obi_rdata = store_obi ? obi_rsp.rdata : curr_obi_rdata;
 
     assign vx_mem_rsp.data = curr_obi_rdata;
 
@@ -97,7 +97,7 @@ module obi_bridge #(
     * Send ready and valid signals
     */
     assign vx_mem_req.ready = vx_mem_req_ready;
-    assign obi_mem_req.req  = obi_mem_req_req;
+    assign obi_req.req      = obi_req_req;
     assign vx_mem_rsp.valid = vx_mem_rsp_valid;
 
     /*
@@ -114,7 +114,7 @@ module obi_bridge #(
         next_state       = curr_state;
         store_vx         = 1'b0;
         vx_mem_req_ready = 1'b0;
-        obi_mem_req_req  = 1'b0;
+        obi_req_req      = 1'b0;
         store_obi        = 1'b0;
         vx_mem_rsp_valid = 1'b0;
         case (curr_state)
@@ -129,8 +129,8 @@ module obi_bridge #(
                 end
             end
             OBI_SEND_REQ: begin
-                obi_mem_req_req = 1'b1;
-                if (obi_mem_req.gnt) begin
+                obi_req_req = 1'b1;
+                if (obi_req.gnt) begin
                     next_state = OBI_WAIT_RSP;
                 end
                 else begin
@@ -138,7 +138,7 @@ module obi_bridge #(
                 end
             end
             OBI_WAIT_RSP: begin
-                if (obi_mem_rsp.rvalid) begin
+                if (obi_rsp.rvalid) begin
                     if (curr_vx_rw) begin
                         next_state = IDLE;
                     end

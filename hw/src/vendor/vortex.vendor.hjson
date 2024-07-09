@@ -20,12 +20,12 @@
   exclude_from_upstream: [
     "ci",
     "docs",
-    "hw/dpi"
-    "hw/scripts"
-    "hw/syn"
-    "hw/unit_tests"
-    "hw/.gitignore"
-    "hw/Makefile"
+    "hw/dpi",
+    "hw/scripts",
+    "hw/syn",
+    "hw/unit_tests",
+    "hw/.gitignore",
+    "hw/Makefile",
     "driver",
     "miscs",
     "runtime",
@@ -38,6 +38,6 @@
     "TODO",
     ".codecov.yml",
     ".gitmodules",
-    ".travis.yml",
+    ".travis.yml"
   ]
 }

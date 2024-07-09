@@ -7,9 +7,15 @@
 clean:
 	rm -rf vendor/vortex
 	rm -rf vendor/vortex.lock.hjson
+	rm -rf vendor/pulp_platform_common_cells
+	rm -rf vendor/pulp_platform_common_cells.lock.hjson
+	rm -rf vendor/pulp_platform_cluster_interconnect
+	rm -rf vendor/pulp_platform_cluster_interconnect.lock.hjson
 
 src-gen-all: src-gen-vendor
 
 src-gen-vendor:
 	cd vendor && \
-	python3 vendor.py vortex.vendor.hjson --update
+	python3 vendor.py vortex.vendor.hjson --update && \
+	python3 vendor.py pulp_platform_common_cells.vendor.hjson --update && \
+	python3 vendor.py pulp_platform_cluster_interconnect.vendor.hjson --update

@@ -53,23 +53,23 @@ module mem_hier_cache_top
         .DATA_WIDTH (WORD_WIDTH_BIT),
         .ADDR_WIDTH (ADDR_WIDTH_BIT),
         .TAG_WIDTH  (`ICACHE_MEM_TAG_WIDTH)
-    ) instr_obi_bridge_req();
+    ) instr_vx_mem_to_obi_bridge_req();
 
     VX_mem_rsp_if #(
         .DATA_WIDTH (WORD_WIDTH_BIT),
         .TAG_WIDTH  (`ICACHE_MEM_TAG_WIDTH)
-    ) instr_obi_bridge_rsp();
+    ) instr_vx_mem_to_obi_bridge_rsp();
 
     VX_mem_req_if #(
         .DATA_WIDTH (WORD_WIDTH_BIT),
         .ADDR_WIDTH (ADDR_WIDTH_BIT),
         .TAG_WIDTH  (`DCACHE_MEM_TAG_WIDTH)
-    ) data_obi_bridge_req();
+    ) data_vx_mem_to_obi_bridge_req();
 
     VX_mem_rsp_if #(
         .DATA_WIDTH (WORD_WIDTH_BIT),
         .TAG_WIDTH  (`DCACHE_MEM_TAG_WIDTH)
-    ) data_obi_bridge_rsp();
+    ) data_vx_mem_to_obi_bridge_rsp();
 
     instr_cache instr_cache_i (
         .clk_i    (clk_i),
@@ -98,8 +98,8 @@ module mem_hier_cache_top
         .rst_ni         (rst_ni),
         .in_mem_req     (instr_serializer_req),
         .in_mem_rsp     (instr_serializer_rsp),
-        .out_mem_req    (instr_obi_bridge_req),
-        .out_mem_rsp    (instr_obi_bridge_rsp)
+        .out_mem_req    (instr_vx_mem_to_obi_bridge_req),
+        .out_mem_rsp    (instr_vx_mem_to_obi_bridge_rsp)
     );
 
     serializer #(
@@ -111,30 +111,30 @@ module mem_hier_cache_top
         .rst_ni         (rst_ni),
         .in_mem_req     (data_serializer_req),
         .in_mem_rsp     (data_serializer_rsp),
-        .out_mem_req    (data_obi_bridge_req),
-        .out_mem_rsp    (data_obi_bridge_rsp)
+        .out_mem_req    (data_vx_mem_to_obi_bridge_req),
+        .out_mem_rsp    (data_vx_mem_to_obi_bridge_rsp)
     );
 
-    obi_bridge #(
+    vx_mem_to_obi_bridge #(
         .TAG_WIDTH_BIT (`ICACHE_MEM_TAG_WIDTH)
-    ) instr_obi_bridge_i (
+    ) instr_vx_mem_to_obi_bridge_i (
         .clk_i         (clk_i),
         .rst_ni        (rst_ni),
-        .vx_mem_req    (instr_obi_bridge_req),
-        .vx_mem_rsp    (instr_obi_bridge_rsp),
-        .obi_mem_req   (instr_mem_req),
-        .obi_mem_rsp   (instr_mem_rsp)
+        .vx_mem_req    (instr_vx_mem_to_obi_bridge_req),
+        .vx_mem_rsp    (instr_vx_mem_to_obi_bridge_rsp),
+        .obi_req       (instr_mem_req),
+        .obi_rsp       (instr_mem_rsp)
     );
 
-    obi_bridge #(
+    vx_mem_to_obi_bridge #(
         .TAG_WIDTH_BIT (`DCACHE_MEM_TAG_WIDTH)
-    ) data_obi_bridge_i (
+    ) data_vx_mem_to_obi_bridge_i (
         .clk_i         (clk_i),
         .rst_ni        (rst_ni),
-        .vx_mem_req    (data_obi_bridge_req),
-        .vx_mem_rsp    (data_obi_bridge_rsp),
-        .obi_mem_req   (data_mem_req),
-        .obi_mem_rsp   (data_mem_rsp)
+        .vx_mem_req    (data_vx_mem_to_obi_bridge_req),
+        .vx_mem_rsp    (data_vx_mem_to_obi_bridge_rsp),
+        .obi_req       (data_mem_req),
+        .obi_rsp       (data_mem_rsp)
     );
 
 endmodule

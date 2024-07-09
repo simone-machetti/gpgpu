@@ -4,7 +4,7 @@
 //
 // Author: Simone Machetti - simone.machetti@epfl.ch
 
-module dual_port_ram # (
+module dual_port_ram #(
     parameter MEM_SIZE_WORD = 32768
 )(
     input logic clk_i,
