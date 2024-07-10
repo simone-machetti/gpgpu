@@ -16,6 +16,9 @@ module gpgpu_top #(
 `endif
 )(
 
+    input logic clk_i,
+    input logic rst_ni,
+
 `ifdef CACHE
 
     obi_req_if.master instr_mem_req,
@@ -26,9 +29,12 @@ module gpgpu_top #(
 
 `endif
 
-    input logic clk_i,
-    input logic rst_ni
+    obi_req_if.slave  conf_regs_req,
+    obi_rsp_if.master conf_regs_rsp
 );
+
+    logic clk_core;
+    logic rst_n_core;
 
     VX_icache_req_if #(
         .WORD_SIZE (`ICACHE_WORD_SIZE),
@@ -53,8 +59,8 @@ module gpgpu_top #(
     ) data_rsp();
 
     core core_i (
-        .clk_i           (clk_i),
-        .rst_ni          (rst_ni),
+        .clk_i           (clk_core),
+        .rst_ni          (rst_n_core),
         .instr_cache_req (instr_req),
         .instr_cache_rsp (instr_rsp),
         .data_cache_req  (data_req),
@@ -63,9 +69,18 @@ module gpgpu_top #(
 
 `ifdef CACHE
 
+    controller_cache_top controller_cache_top_i (
+        .clk_i        (clk_i),
+        .rst_ni       (rst_ni),
+        .regs_req     (conf_regs_req),
+        .regs_rsp     (conf_regs_rsp),
+        .clk_core_o   (clk_core),
+        .rst_n_core_o (rst_n_core)
+    );
+
     mem_hier_cache_top mem_hier_cache_top_i (
-        .clk_i           (clk_i),
-        .rst_ni          (rst_ni),
+        .clk_i           (clk_core),
+        .rst_ni          (rst_n_core),
         .instr_cache_req (instr_req),
         .instr_cache_rsp (instr_rsp),
         .data_cache_req  (data_req),

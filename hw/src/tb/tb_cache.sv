@@ -10,63 +10,31 @@
 `define IN_FILE  "$GPGPU_HOME/hw/imp/sim/input/kernel.mem"
 `define OUT_FILE "$GPGPU_HOME/hw/imp/sim/output/output.mem"
 
-task init_mem;
-begin
-    int i;
-    for (i=0; i<`RAM_SIZE_BYTE/4; i++) begin
-        testbench.dual_port_ram_i.mem_array[i] = 0;
-    end
-    $readmemh(`IN_FILE, testbench.dual_port_ram_i.mem_array);
-end
-endtask
-
-task dump_mem;
-begin
-    int fd;
-    int i;
-    fd = $fopen(`OUT_FILE, "w");
-    for (i=0; i<`RAM_SIZE_BYTE/4; i++) begin
-        $fdisplay(fd, "%X", testbench.dual_port_ram_i.mem_array[i]);
-    end
-end
-endtask
-
-task init_vcd;
-begin
-    $dumpfile("output.vcd");
-end
-endtask
-
-task start_vcd;
-begin
-    $dumpvars(0, testbench);
-end
-endtask
-
-task stop_vcd;
-begin
-    $dumpoff;
-end
-endtask
-
 module testbench;
 
     logic clk;
     logic rst_n;
 
-    obi_req_if instr_req();
-    obi_rsp_if instr_rsp();
+    obi_req_if instr_mem_req();
+    obi_rsp_if instr_mem_rsp();
 
-    obi_req_if data_req();
-    obi_rsp_if data_rsp();
+    obi_req_if data_mem_req();
+    obi_rsp_if data_mem_rsp();
+
+    obi_req_if conf_regs_req();
+    obi_rsp_if conf_regs_rsp();
+
+    real clk_period = 100;
 
     gpgpu_top gpgpu_top_i (
         .clk_i         (clk),
         .rst_ni        (rst_n),
-        .instr_mem_req (instr_req),
-        .instr_mem_rsp (instr_rsp),
-        .data_mem_req  (data_req),
-        .data_mem_rsp  (data_rsp)
+        .instr_mem_req (instr_mem_req),
+        .instr_mem_rsp (instr_mem_rsp),
+        .data_mem_req  (data_mem_req),
+        .data_mem_rsp  (data_mem_rsp),
+        .conf_regs_req (conf_regs_req),
+        .conf_regs_rsp (conf_regs_rsp)
     );
 
     dual_port_ram # (
@@ -74,22 +42,77 @@ module testbench;
     ) dual_port_ram_i (
         .clk_i         (clk),
         .rst_ni        (rst_n),
-        .instr_mem_req (instr_req),
-        .instr_mem_rsp (instr_rsp),
-        .data_mem_req  (data_req),
-        .data_mem_rsp  (data_rsp)
+        .instr_mem_req (instr_mem_req),
+        .instr_mem_rsp (instr_mem_rsp),
+        .data_mem_req  (data_mem_req),
+        .data_mem_rsp  (data_mem_rsp)
     );
 
-    real clk_period = 1000;
+    task init_vcd;
+    begin
+        $dumpfile("output.vcd");
+    end
+    endtask
+
+    task start_vcd;
+    begin
+        $dumpvars(0, testbench);
+    end
+    endtask
+
+    task stop_vcd;
+    begin
+        $dumpoff;
+    end
+    endtask
+
+    task init_mem;
+    begin
+        int i;
+        for (i=0; i<`RAM_SIZE_BYTE/4; i++) begin
+            testbench.dual_port_ram_i.mem_array[i] = 0;
+        end
+        $readmemh(`IN_FILE, testbench.dual_port_ram_i.mem_array);
+    end
+    endtask
+
+    task dump_mem;
+    begin
+        int fd;
+        int i;
+        fd = $fopen(`OUT_FILE, "w");
+        for (i=0; i<`RAM_SIZE_BYTE/4; i++) begin
+            $fdisplay(fd, "%X", testbench.dual_port_ram_i.mem_array[i]);
+        end
+    end
+    endtask
+
+    task write_conf_regs (input logic [31:0] addr, input logic [31:0] data);
+    begin
+        @(posedge clk);
+        conf_regs_req.req   = 1'b1;
+        conf_regs_req.we    = 1'b1;
+        conf_regs_req.be    = 4'b1111;
+        conf_regs_req.addr  = addr;
+        conf_regs_req.wdata = data;
+        while (!conf_regs_req.gnt)
+            @(posedge clk);
+        conf_regs_req.req   = 1'b0;
+        while (!conf_regs_rsp.rvalid);
+            @(posedge clk);
+    end
+    endtask
 
     initial begin
         rst_n = 1'b0;
         init_vcd;
         init_mem;
         start_vcd;
-        #(clk_period*100);
-        #(clk_period/4);
+        #(clk_period*50);
         rst_n = 1'b1;
+        write_conf_regs(32'h00000000, 32'h00000001);
+        #(clk_period*50);
+        write_conf_regs(32'h00000004, 32'h00000001);
     end
 
     always begin

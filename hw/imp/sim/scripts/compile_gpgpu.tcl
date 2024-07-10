@@ -142,34 +142,46 @@ vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_i
 # /hw/src/rtl/common
 vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/common/sram_behavioral.sv
 vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/common/sram_wrapper.sv
+vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/common/clk_gate_cell_behavioral.sv
+vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/common/clk_gate_cell_wrapper.sv
 
-# /hw/src/rtl/mem_hier_cache
-vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_cache/vx_mem_to_obi_bridge.sv
-vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_cache/serializer.sv
-vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_cache/instr_cache.sv
-vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_cache/data_cache.sv
-vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_cache/mem_hier_cache_top.sv
+if {$env(SEL_MEM_HIER) == "CACHE"} {
 
-# /hw/src/rtl/mem_hier_scratchpad/include
-vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_scratchpad/include/mem_map_pkg.sv
+    # /hw/src/rtl/controller_cache
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/controller_cache/controller_cache.sv
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/controller_cache/controller_cache_top.sv
 
-# /hw/src/vendor/pulp_platform_common_cells/src
-vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/vendor/pulp_platform_common_cells/src/rr_arb_tree.sv
-vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/vendor/pulp_platform_common_cells/src/lzc.sv
-vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/vendor/pulp_platform_common_cells/src/cf_math_pkg.sv
-vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/vendor/pulp_platform_common_cells/src/addr_decode.sv
+    # /hw/src/rtl/mem_hier_cache
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_cache/vx_mem_to_obi_bridge.sv
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_cache/serializer.sv
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_cache/instr_cache.sv
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_cache/data_cache.sv
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_cache/mem_hier_cache_top.sv
 
-# /hw/src/vendor/pulp_platform_cluster_interconnect/rtl/tcdm_variable_latency_interconnect
-vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/vendor/pulp_platform_cluster_interconnect/rtl/tcdm_variable_latency_interconnect/addr_dec_resp_mux_varlat.sv
-vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/vendor/pulp_platform_cluster_interconnect/rtl/tcdm_variable_latency_interconnect/xbar_varlat.sv
+} else {
 
-# /hw/src/rtl/mem_hier_scratchpad
-vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_scratchpad/vx_icache_to_obi_bridge.sv
-vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_scratchpad/vx_dcache_to_obi_bridge.sv
-vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_scratchpad/il_bus_interconnect.sv
-vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_scratchpad/instr_mem.sv
-vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_scratchpad/data_mem.sv
-vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_scratchpad/mem_hier_scratchpad_top.sv
+    # /hw/src/rtl/mem_hier_scratchpad/include
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_scratchpad/include/mem_map_pkg.sv
+
+    # /hw/src/vendor/pulp_platform_common_cells/src
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/vendor/pulp_platform_common_cells/src/rr_arb_tree.sv
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/vendor/pulp_platform_common_cells/src/lzc.sv
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/vendor/pulp_platform_common_cells/src/cf_math_pkg.sv
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/vendor/pulp_platform_common_cells/src/addr_decode.sv
+
+    # /hw/src/vendor/pulp_platform_cluster_interconnect/rtl/tcdm_variable_latency_interconnect
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/vendor/pulp_platform_cluster_interconnect/rtl/tcdm_variable_latency_interconnect/addr_dec_resp_mux_varlat.sv
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/vendor/pulp_platform_cluster_interconnect/rtl/tcdm_variable_latency_interconnect/xbar_varlat.sv
+
+    # /hw/src/rtl/mem_hier_scratchpad
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_scratchpad/vx_icache_to_obi_bridge.sv
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_scratchpad/vx_dcache_to_obi_bridge.sv
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_scratchpad/il_bus_interconnect.sv
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_scratchpad/instr_mem.sv
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_scratchpad/data_mem.sv
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_scratchpad/mem_hier_scratchpad_top.sv
+
+}
 
 # /hw/src/rtl/
 vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/core.sv
