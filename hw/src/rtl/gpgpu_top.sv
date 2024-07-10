@@ -93,13 +93,22 @@ module gpgpu_top #(
 
 `else
 
+    controller_scratchpad_top controller_scratchpad_top_i (
+        .clk_i        (clk_i),
+        .rst_ni       (rst_ni),
+        .regs_req     (conf_regs_req),
+        .regs_rsp     (conf_regs_rsp),
+        .clk_core_o   (clk_core),
+        .rst_n_core_o (rst_n_core)
+    );
+
     mem_hier_scratchpad_top #(
         .INSTR_MEM_SIZE_BYTE  (INSTR_MEM_SIZE_BYTE),
         .DATA_MEM_SIZE_BYTE   (DATA_MEM_SIZE_BYTE),
         .DATA_MEM_NUM_BANKS   (DATA_MEM_NUM_BANKS)
     ) mem_hier_scratchpad_top_i (
-        .clk_i                (clk_i),
-        .rst_ni               (rst_ni),
+        .clk_i                (clk_core),
+        .rst_ni               (rst_n_core),
         .instr_scratchpad_req (instr_req),
         .instr_scratchpad_rsp (instr_rsp),
         .data_scratchpad_req  (data_req),

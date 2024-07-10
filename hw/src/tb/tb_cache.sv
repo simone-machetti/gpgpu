@@ -95,9 +95,12 @@ module testbench;
         conf_regs_req.be    = 4'b1111;
         conf_regs_req.addr  = addr;
         conf_regs_req.wdata = data;
+
         while (!conf_regs_req.gnt)
             @(posedge clk);
+
         conf_regs_req.req   = 1'b0;
+
         while (!conf_regs_rsp.rvalid);
             @(posedge clk);
     end

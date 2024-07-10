@@ -160,6 +160,10 @@ if {$env(SEL_MEM_HIER) == "CACHE"} {
 
 } else {
 
+    # /hw/src/rtl/controller_cache
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/controller_scratchpad/controller_scratchpad.sv
+    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/controller_scratchpad/controller_scratchpad_top.sv
+
     # /hw/src/rtl/mem_hier_scratchpad/include
     vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/rtl/mem_hier_scratchpad/include/mem_map_pkg.sv
 

@@ -12,68 +12,15 @@
 `define IN_FILE_INSTR "$GPGPU_HOME/hw/imp/sim/input/kernel_instr.mem"
 `define IN_FILE_DATA  "$GPGPU_HOME/hw/imp/sim/input/kernel_data.mem"
 
-task init_instr_mem;
-begin
-    int i;
-    for (i=0; i<`INSTR_MEM_SIZE_BYTE/4; i++) begin
-        testbench.gpgpu_top_i.mem_hier_scratchpad_top_i.instr_mem_i.sram_wrapper_i.sram_behavioral_i.mem_array[i] = 0;
-    end
-    $readmemh(`IN_FILE_INSTR, testbench.gpgpu_top_i.mem_hier_scratchpad_top_i.instr_mem_i.sram_wrapper_i.sram_behavioral_i.mem_array);
-end
-endtask
-
-task init_data_mem;
-begin
-    int i;
-    logic [31:0] kernel_data[`DATA_MEM_SIZE_BYTE];
-
-    for (i=0; i<(`DATA_MEM_SIZE_BYTE/`DATA_MEM_NUM_BANKS)/4; i++) begin
-        testbench.gpgpu_top_i.mem_hier_scratchpad_top_i.data_mem_i.gen_block[0].sram_wrapper_i.sram_behavioral_i.mem_array[i] = 0;
-        testbench.gpgpu_top_i.mem_hier_scratchpad_top_i.data_mem_i.gen_block[1].sram_wrapper_i.sram_behavioral_i.mem_array[i] = 0;
-        testbench.gpgpu_top_i.mem_hier_scratchpad_top_i.data_mem_i.gen_block[2].sram_wrapper_i.sram_behavioral_i.mem_array[i] = 0;
-        testbench.gpgpu_top_i.mem_hier_scratchpad_top_i.data_mem_i.gen_block[3].sram_wrapper_i.sram_behavioral_i.mem_array[i] = 0;
-    end
-
-    $readmemh(`IN_FILE_DATA, kernel_data);
-
-    for (i=0; i<(`DATA_MEM_SIZE_BYTE/`DATA_MEM_NUM_BANKS)/4; i++) begin
-        testbench.gpgpu_top_i.mem_hier_scratchpad_top_i.data_mem_i.gen_block[0].sram_wrapper_i.sram_behavioral_i.mem_array[i] = kernel_data[i*4];
-        testbench.gpgpu_top_i.mem_hier_scratchpad_top_i.data_mem_i.gen_block[1].sram_wrapper_i.sram_behavioral_i.mem_array[i] = kernel_data[(i*4)+1];
-        testbench.gpgpu_top_i.mem_hier_scratchpad_top_i.data_mem_i.gen_block[2].sram_wrapper_i.sram_behavioral_i.mem_array[i] = kernel_data[(i*4)+2];
-        testbench.gpgpu_top_i.mem_hier_scratchpad_top_i.data_mem_i.gen_block[3].sram_wrapper_i.sram_behavioral_i.mem_array[i] = kernel_data[(i*4)+3];
-    end
-end
-endtask
-
-task init_mem;
-begin
-    init_instr_mem;
-    init_data_mem;
-end
-endtask
-
-task init_vcd;
-begin
-    $dumpfile("output.vcd");
-end
-endtask
-
-task start_vcd;
-begin
-    $dumpvars(0, testbench);
-end
-endtask
-
-task stop_vcd;
-begin
-    $dumpoff;
-end
-endtask
-
 module testbench;
 
     logic clk;
     logic rst_n;
+
+    obi_req_if conf_regs_req();
+    obi_rsp_if conf_regs_rsp();
+
+    real clk_period = 100;
 
     gpgpu_top #(
         .INSTR_MEM_SIZE_BYTE (`INSTR_MEM_SIZE_BYTE),
@@ -81,19 +28,98 @@ module testbench;
         .DATA_MEM_NUM_BANKS  (`DATA_MEM_NUM_BANKS)
     ) gpgpu_top_i (
         .clk_i               (clk),
-        .rst_ni              (rst_n)
+        .rst_ni              (rst_n),
+        .conf_regs_req       (conf_regs_req),
+        .conf_regs_rsp       (conf_regs_rsp)
     );
 
-    real clk_period = 1000;
+    task init_vcd;
+    begin
+        $dumpfile("output.vcd");
+    end
+    endtask
+
+    task start_vcd;
+    begin
+        $dumpvars(0, testbench);
+    end
+    endtask
+
+    task stop_vcd;
+    begin
+        $dumpoff;
+    end
+    endtask
+
+    task init_instr_mem;
+    begin
+        int i;
+        for (i=0; i<`INSTR_MEM_SIZE_BYTE/4; i++) begin
+            testbench.gpgpu_top_i.mem_hier_scratchpad_top_i.instr_mem_i.sram_wrapper_i.sram_behavioral_i.mem_array[i] = 0;
+        end
+        $readmemh(`IN_FILE_INSTR, testbench.gpgpu_top_i.mem_hier_scratchpad_top_i.instr_mem_i.sram_wrapper_i.sram_behavioral_i.mem_array);
+    end
+    endtask
+
+    task init_data_mem;
+    begin
+        int i;
+        logic [31:0] kernel_data[`DATA_MEM_SIZE_BYTE];
+
+        for (i=0; i<(`DATA_MEM_SIZE_BYTE/`DATA_MEM_NUM_BANKS)/4; i++) begin
+            testbench.gpgpu_top_i.mem_hier_scratchpad_top_i.data_mem_i.gen_block[0].sram_wrapper_i.sram_behavioral_i.mem_array[i] = 0;
+            testbench.gpgpu_top_i.mem_hier_scratchpad_top_i.data_mem_i.gen_block[1].sram_wrapper_i.sram_behavioral_i.mem_array[i] = 0;
+            testbench.gpgpu_top_i.mem_hier_scratchpad_top_i.data_mem_i.gen_block[2].sram_wrapper_i.sram_behavioral_i.mem_array[i] = 0;
+            testbench.gpgpu_top_i.mem_hier_scratchpad_top_i.data_mem_i.gen_block[3].sram_wrapper_i.sram_behavioral_i.mem_array[i] = 0;
+        end
+
+        $readmemh(`IN_FILE_DATA, kernel_data);
+
+        for (i=0; i<(`DATA_MEM_SIZE_BYTE/`DATA_MEM_NUM_BANKS)/4; i++) begin
+            testbench.gpgpu_top_i.mem_hier_scratchpad_top_i.data_mem_i.gen_block[0].sram_wrapper_i.sram_behavioral_i.mem_array[i] = kernel_data[i*4];
+            testbench.gpgpu_top_i.mem_hier_scratchpad_top_i.data_mem_i.gen_block[1].sram_wrapper_i.sram_behavioral_i.mem_array[i] = kernel_data[(i*4)+1];
+            testbench.gpgpu_top_i.mem_hier_scratchpad_top_i.data_mem_i.gen_block[2].sram_wrapper_i.sram_behavioral_i.mem_array[i] = kernel_data[(i*4)+2];
+            testbench.gpgpu_top_i.mem_hier_scratchpad_top_i.data_mem_i.gen_block[3].sram_wrapper_i.sram_behavioral_i.mem_array[i] = kernel_data[(i*4)+3];
+        end
+    end
+    endtask
+
+    task init_mem;
+    begin
+        init_instr_mem;
+        init_data_mem;
+    end
+    endtask
+
+    task write_conf_regs (input logic [31:0] addr, input logic [31:0] data);
+    begin
+        @(posedge clk);
+        conf_regs_req.req   = 1'b1;
+        conf_regs_req.we    = 1'b1;
+        conf_regs_req.be    = 4'b1111;
+        conf_regs_req.addr  = addr;
+        conf_regs_req.wdata = data;
+
+        while (!conf_regs_req.gnt)
+            @(posedge clk);
+
+        conf_regs_req.req   = 1'b0;
+
+        while (!conf_regs_rsp.rvalid);
+            @(posedge clk);
+    end
+    endtask
 
     initial begin
         rst_n = 1'b0;
         init_vcd;
         init_mem;
         start_vcd;
-        #(clk_period*100);
-        #(clk_period/4);
+        #(clk_period*50);
         rst_n = 1'b1;
+        write_conf_regs(32'h00000000, 32'h00000001);
+        #(clk_period*50);
+        write_conf_regs(32'h00000004, 32'h00000001);
     end
 
     always begin
