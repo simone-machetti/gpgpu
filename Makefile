@@ -68,6 +68,16 @@ endif
 wave:
 	gtkwave $(GPGPU_HOME)/hw/imp/sim/output/output.vcd &
 
+syn:
+	cd $(GPGPU_HOME)/hw/imp/syn && \
+	mkdir -p $(GPGPU_HOME)/hw/imp/syn/output && \
+	mkdir -p $(GPGPU_HOME)/hw/imp/syn/report && \
+	mkdir -p $(GPGPU_HOME)/hw/imp/syn/work && \
+	cd $(GPGPU_HOME)/hw/imp/syn/work && \
+	export SEL_MEM_HIER=$(MEM_HIER) && \
+	dc_shell -f $(GPGPU_HOME)/hw/imp/syn/scripts/gpgpu.tcl && \
+	exit
+
 clean:
 	rm -rf $(GPGPU_HOME)/sw/apps/$(APP_NAME)/build
 	rm -rf $(GPGPU_HOME)/sw/apps/$(APP_NAME)/work
