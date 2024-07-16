@@ -12,17 +12,22 @@ module instr_mem #(
     input logic clk_i,
     input logic rst_ni,
 
-    obi_req_if.slave  instr_mem_req,
-    obi_rsp_if.master instr_mem_rsp
+    obi_req_if.slave  instr_mem_req_0,
+    obi_rsp_if.master instr_mem_rsp_0,
+
+    obi_req_if.slave  instr_mem_req_1,
+    obi_rsp_if.master instr_mem_rsp_1
 );
 
-    sram_wrapper #(
+    double_port_sram_wrapper #(
         .MEM_SIZE_BYTE (INSTR_MEM_SIZE_BYTE)
-    ) sram_wrapper_i (
+    ) double_port_sram_wrapper_i (
         .clk_i         (clk_i),
         .rst_ni        (rst_ni),
-        .req           (instr_mem_req),
-        .rsp           (instr_mem_rsp)
+        .req_0         (instr_mem_req_0),
+        .rsp_0         (instr_mem_rsp_0),
+        .req_1         (instr_mem_req_1),
+        .rsp_1         (instr_mem_rsp_1)
     );
 
 endmodule

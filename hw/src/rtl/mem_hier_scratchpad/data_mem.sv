@@ -22,9 +22,9 @@ module data_mem #(
     genvar i;
     generate
         for (i=0; i<DATA_MEM_NUM_BANKS; i++) begin : gen_block
-            sram_wrapper #(
+            single_port_sram_wrapper #(
                 .MEM_SIZE_BYTE (DATA_MEM_SIZE_BANK_BYTE)
-            ) sram_wrapper_i (
+            ) single_port_sram_wrapper_i (
                 .clk_i         (clk_i),
                 .rst_ni        (rst_ni),
                 .req           (data_mem_req[i]),

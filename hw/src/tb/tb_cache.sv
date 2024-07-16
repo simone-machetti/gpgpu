@@ -8,7 +8,6 @@
 `define RAM_DONE_WORD 40704
 
 `define IN_FILE  "$GPGPU_HOME/hw/imp/sim/input/kernel.mem"
-`define OUT_FILE "$GPGPU_HOME/hw/imp/sim/output/output.mem"
 
 module testbench;
 
@@ -29,12 +28,12 @@ module testbench;
     gpgpu_top gpgpu_top_i (
         .clk_i         (clk),
         .rst_ni        (rst_n),
+        .conf_regs_req (conf_regs_req),
+        .conf_regs_rsp (conf_regs_rsp),
         .instr_mem_req (instr_mem_req),
         .instr_mem_rsp (instr_mem_rsp),
         .data_mem_req  (data_mem_req),
-        .data_mem_rsp  (data_mem_rsp),
-        .conf_regs_req (conf_regs_req),
-        .conf_regs_rsp (conf_regs_rsp)
+        .data_mem_rsp  (data_mem_rsp)
     );
 
     dual_port_ram # (
@@ -76,17 +75,6 @@ module testbench;
     end
     endtask
 
-    task dump_mem;
-    begin
-        int fd;
-        int i;
-        fd = $fopen(`OUT_FILE, "w");
-        for (i=0; i<`RAM_SIZE_BYTE/4; i++) begin
-            $fdisplay(fd, "%X", testbench.dual_port_ram_i.mem_array[i]);
-        end
-    end
-    endtask
-
     task write_conf_regs (input logic [31:0] addr, input logic [31:0] data);
     begin
         @(posedge clk);
@@ -99,7 +87,7 @@ module testbench;
         while (!conf_regs_req.gnt)
             @(posedge clk);
 
-        conf_regs_req.req   = 1'b0;
+        conf_regs_req.req = 1'b0;
 
         while (!conf_regs_rsp.rvalid);
             @(posedge clk);
@@ -113,9 +101,9 @@ module testbench;
         start_vcd;
         #(clk_period*50);
         rst_n = 1'b1;
-        write_conf_regs(32'h00000000, 32'h00000001);
+        write_conf_regs(32'd0, 32'd1);
         #(clk_period*50);
-        write_conf_regs(32'h00000004, 32'h00000001);
+        write_conf_regs(32'd4, 32'd1);
     end
 
     always begin
@@ -126,7 +114,6 @@ module testbench;
 
         if(testbench.dual_port_ram_i.mem_array[`RAM_DONE_WORD][31:0] == 1) begin
             stop_vcd;
-            dump_mem;
             $stop;
         end
     end

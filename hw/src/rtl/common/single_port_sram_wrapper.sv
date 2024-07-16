@@ -6,7 +6,7 @@
 
 `include "VX_define.vh"
 
-module sram_wrapper #(
+module single_port_sram_wrapper #(
     parameter MEM_SIZE_BYTE = 32768
 )(
     input logic clk_i,
@@ -16,9 +16,9 @@ module sram_wrapper #(
     obi_rsp_if.master rsp
 );
 
-    sram_behavioral #(
+    single_port_sram_behavioral #(
         .MEM_SIZE_BYTE (MEM_SIZE_BYTE)
-    ) sram_behavioral_i (
+    ) single_port_sram_behavioral_i (
         .clk_i         (clk_i),
         .rst_ni        (rst_ni),
         .req           (req),

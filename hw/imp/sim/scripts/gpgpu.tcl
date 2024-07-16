@@ -8,12 +8,12 @@ source $env(GPGPU_HOME)/hw/imp/sim/scripts/compile_gpgpu.tcl
 
 if {$env(SEL_MEM_HIER) == "CACHE"} {
 
-    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/tb/dual_port_ram.sv
-    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/tb/tb_cache.sv
+    vlog -work work $env(GPGPU_HOME)/hw/src/tb/dual_port_ram.sv
+    vlog -work work $env(GPGPU_HOME)/hw/src/tb/tb_cache.sv
 
 } else {
 
-    vlog -work work $lib_include $lib_vx_rtl $lib_vx_tex_unit $lib_vx_libs $lib_vx_interfaces $lib_vx_fp_cores $lib_vx_cache $env(GPGPU_HOME)/hw/src/tb/tb_scratchpad.sv
+    vlog -work work $env(GPGPU_HOME)/hw/src/tb/tb_scratchpad.sv
 
 }
 

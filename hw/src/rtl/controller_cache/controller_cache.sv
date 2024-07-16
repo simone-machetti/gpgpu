@@ -18,6 +18,16 @@ module controller_cache
     output logic rst_n_core_o
 );
 
+    /*
+    * REGISTERS:
+    *
+    * - regs[0][0] : start - active high (default: 0)
+    * - regs[1][0] : reset - active low  (default: 0)
+    * - regs[2]    : unused
+    * - regs[3]    : unused
+    *
+    */
+
     logic [31:0] curr_regs [0:3];
     logic [31:0] next_regs [0:3];
 

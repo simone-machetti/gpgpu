@@ -6,7 +6,7 @@
 
 `include "VX_define.vh"
 
-module sram_behavioral #(
+module single_port_sram_behavioral #(
     parameter MEM_SIZE_BYTE = 32768
 )(
     input logic clk_i,
@@ -25,9 +25,9 @@ module sram_behavioral #(
     state_t curr_state;
     state_t next_state;
 
-    logic [3:0]  be;
+    logic [3:0]                       be;
     logic [$clog2(MEM_SIZE_BYTE)-3:0] addr;
-    logic [31:0] wdata;
+    logic [31:0]                      wdata;
 
     always_ff @(posedge(clk_i) or negedge(rst_ni)) begin
         if (!rst_ni) begin

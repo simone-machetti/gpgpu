@@ -20,7 +20,13 @@ module mem_hier_scratchpad_top
     VX_icache_rsp_if.master instr_scratchpad_rsp,
 
     VX_dcache_req_if.slave  data_scratchpad_req,
-    VX_dcache_rsp_if.master data_scratchpad_rsp
+    VX_dcache_rsp_if.master data_scratchpad_rsp,
+
+    obi_req_if.slave  int_instr_req,
+    obi_rsp_if.master int_instr_rsp,
+
+    obi_req_if.slave  int_data_req,
+    obi_rsp_if.master int_data_rsp
 );
 
     obi_req_if instr_mem_req();
@@ -76,8 +82,10 @@ module mem_hier_scratchpad_top
     ) instr_mem_i (
         .clk_i               (clk_i),
         .rst_ni              (rst_ni),
-        .instr_mem_req       (instr_mem_req),
-        .instr_mem_rsp       (instr_mem_rsp)
+        .instr_mem_req_0     (instr_mem_req),
+        .instr_mem_rsp_0     (instr_mem_rsp),
+        .instr_mem_req_1     (int_instr_req),
+        .instr_mem_rsp_1     (int_instr_rsp)
     );
 
     data_mem #(
