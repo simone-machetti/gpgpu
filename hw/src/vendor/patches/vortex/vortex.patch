@@ -1,8 +1,36 @@
 diff --git a/hw/rtl/VX_config.vh b/hw/rtl/VX_config.vh
-index 8a8e8dcf..5e3ca737 100644
+index 8a8e8dcf..58a11905 100644
 --- a/hw/rtl/VX_config.vh
 +++ b/hw/rtl/VX_config.vh
-@@ -46,7 +46,7 @@
+@@ -1,6 +1,9 @@
+ `ifndef VX_CONFIG
+ `define VX_CONFIG
+ 
++`define EXT_M_DISABLE
++`define EXT_F_DISABLE
++
+ `ifndef XLEN
+ `define XLEN 32
+ `endif
+@@ -14,7 +17,7 @@
+ `endif
+ 
+ `ifndef NUM_WARPS
+-`define NUM_WARPS 4
++`define NUM_WARPS 2
+ `endif
+ 
+ `ifndef NUM_THREADS
+@@ -34,7 +37,7 @@
+ `endif
+ 
+ `ifndef SM_ENABLE
+-`define SM_ENABLE 1
++`define SM_ENABLE 0
+ `endif
+ 
+ `ifndef MEM_BLOCK_SIZE
+@@ -46,7 +49,7 @@
  `endif
  
  `ifndef STARTUP_ADDR
@@ -12,19 +40,10 @@ index 8a8e8dcf..5e3ca737 100644
  
  `ifndef IO_BASE_ADDR
 diff --git a/hw/rtl/VX_define.vh b/hw/rtl/VX_define.vh
-index 2badf7f8..122dc38a 100644
+index 2badf7f8..35b308cc 100644
 --- a/hw/rtl/VX_define.vh
 +++ b/hw/rtl/VX_define.vh
-@@ -4,6 +4,8 @@
- `include "VX_platform.vh"
- `include "VX_config.vh"
- 
-+`define FPU_FPNEW
-+
- ///////////////////////////////////////////////////////////////////////////////
- 
- `define NW_BITS         `LOG2UP(`NUM_WARPS)
-@@ -62,10 +64,10 @@
+@@ -62,10 +62,10 @@
  
  `define INST_FL         7'b0000111 // float load instruction
  `define INST_FS         7'b0100111 // float store  instruction
@@ -37,7 +56,7 @@ index 2badf7f8..122dc38a 100644
  `define INST_FCI        7'b1010011 // float common instructions
  
  `define INST_GPGPU      7'b1101011
-@@ -112,8 +114,8 @@
+@@ -112,8 +112,8 @@
  
  `define INST_BR_EQ           4'b0000
  `define INST_BR_NE           4'b0010
@@ -48,7 +67,7 @@ index 2badf7f8..122dc38a 100644
  `define INST_BR_LT           4'b0101
  `define INST_BR_GE           4'b0111
  `define INST_BR_JAL          4'b1000
-@@ -146,12 +148,12 @@
+@@ -146,12 +146,12 @@
  `define INST_FMT_BU          3'b100
  `define INST_FMT_HU          3'b101
  
@@ -63,7 +82,7 @@ index 2badf7f8..122dc38a 100644
  `define INST_LSU_SH          4'b1001
  `define INST_LSU_SW          4'b1010
  `define INST_LSU_BITS        4
-@@ -171,26 +173,26 @@
+@@ -171,26 +171,26 @@
  `define INST_CSR_OTHER       2'h0
  `define INST_CSR_BITS        2
  
@@ -99,7 +118,7 @@ index 2badf7f8..122dc38a 100644
  `define INST_GPU_SPLIT       4'h2
  `define INST_GPU_JOIN        4'h3
  `define INST_GPU_BAR         4'h4
-@@ -261,7 +263,7 @@
+@@ -261,7 +261,7 @@
  // Block size in bytes
  `define ICACHE_LINE_SIZE        `L1_BLOCK_SIZE
  
@@ -108,7 +127,7 @@ index 2badf7f8..122dc38a 100644
  `define ICACHE_CORE_TAG_ID_BITS `NW_BITS
  
  // Core request tag bits
-@@ -293,12 +295,12 @@
+@@ -293,12 +293,12 @@
  `define LSU_TAG_ID_BITS         `MAX(`LSUQ_ADDR_BITS, 2)
  `define LSU_TEX_DCACHE_TAG_BITS (`UUID_BITS + `LSU_TAG_ID_BITS + `CACHE_ADDR_TYPE_BITS)
  `define DCACHE_CORE_TAG_ID_BITS (`LSU_TAG_ID_BITS + `CACHE_ADDR_TYPE_BITS + `TEX_TAG_BIT)
@@ -123,7 +142,7 @@ index 2badf7f8..122dc38a 100644
  // Memory request data bits
  `define DCACHE_MEM_DATA_WIDTH   (`DCACHE_LINE_SIZE * 8)
  
-@@ -399,11 +401,11 @@
+@@ -399,11 +399,11 @@
  
  ///////////////////////////////////////////////////////////////////////////////
  
@@ -137,32 +156,780 @@ index 2badf7f8..122dc38a 100644
  `define VX_CSR_ID_WIDTH         `LOG2UP(`NUM_CLUSTERS * `NUM_CORES)
  
  `define TO_FULL_ADDR(x)         {x, (32-$bits(x))'(0)}
+diff --git a/hw/rtl/VX_lsu_unit.sv b/hw/rtl/VX_lsu_unit.sv
+index 5116035f..b8732ee3 100644
+--- a/hw/rtl/VX_lsu_unit.sv
++++ b/hw/rtl/VX_lsu_unit.sv
+@@ -2,7 +2,7 @@
+ 
+ module VX_lsu_unit #(
+     parameter CORE_ID = 0
+-) (    
++) (
+     `SCOPE_IO_VX_lsu_unit
+ 
+     input wire              clk,
+@@ -19,33 +19,33 @@ module VX_lsu_unit #(
+     VX_commit_if.master     ld_commit_if,
+     VX_commit_if.master     st_commit_if
+ );
+-    localparam MEM_ASHIFT = `CLOG2(`MEM_BLOCK_SIZE);    
++    localparam MEM_ASHIFT = `CLOG2(`MEM_BLOCK_SIZE);
+     localparam MEM_ADDRW  = 32 - MEM_ASHIFT;
+     localparam REQ_ASHIFT = `CLOG2(`DCACHE_WORD_SIZE);
+ 
+     `STATIC_ASSERT(0 == (`IO_BASE_ADDR % MEM_ASHIFT), ("invalid parameter"))
+     `STATIC_ASSERT(0 == (`SMEM_BASE_ADDR % MEM_ASHIFT), ("invalid parameter"))
+     `STATIC_ASSERT(`SMEM_SIZE == `MEM_BLOCK_SIZE * (`SMEM_SIZE / `MEM_BLOCK_SIZE), ("invalid parameter"))
+-    
++
+     wire                          req_valid;
+     wire [`UUID_BITS-1:0]         req_uuid;
+     wire [`NUM_THREADS-1:0]       req_tmask;
+-    wire [`NUM_THREADS-1:0][31:0] req_addr;       
++    wire [`NUM_THREADS-1:0][31:0] req_addr;
+     wire [`INST_LSU_BITS-1:0]     req_type;
+-    wire [`NUM_THREADS-1:0][31:0] req_data;   
++    wire [`NUM_THREADS-1:0][31:0] req_data;
+     wire [`NR_BITS-1:0]           req_rd;
+     wire                          req_wb;
+     wire [`NW_BITS-1:0]           req_wid;
+     wire [31:0]                   req_pc;
+     wire                          req_is_dup;
+     wire                          req_is_prefetch;
+-    
++
+     wire mbuf_empty;
+ 
+     wire [`NUM_THREADS-1:0][`CACHE_ADDR_TYPE_BITS-1:0] lsu_addr_type, req_addr_type;
+ 
+     // full address calculation
+-    wire [`NUM_THREADS-1:0][31:0] full_addr;    
++    wire [`NUM_THREADS-1:0][31:0] full_addr;
+     for (genvar i = 0; i < `NUM_THREADS; i++) begin
+         assign full_addr[i] = lsu_req_if.base_addr[i] + lsu_req_if.offset;
+     end
+@@ -54,7 +54,7 @@ module VX_lsu_unit #(
+     wire [`NUM_THREADS-2:0] addr_matches;
+     for (genvar i = 0; i < (`NUM_THREADS-1); i++) begin
+         assign addr_matches[i] = (lsu_req_if.base_addr[i+1] == lsu_req_if.base_addr[0]) || ~lsu_req_if.tmask[i+1];
+-    end    
++    end
+ 
+     wire lsu_is_dup = lsu_req_if.tmask[0] && (& addr_matches);
+ 
+@@ -64,7 +64,7 @@ module VX_lsu_unit #(
+         if (`SM_ENABLE) begin
+             // is shared memory address
+             wire is_addr_sm = (full_addr[i][MEM_ASHIFT +: MEM_ADDRW] >= MEM_ADDRW'((`SMEM_BASE_ADDR - `SMEM_SIZE) >> MEM_ASHIFT))
+-                            & (full_addr[i][MEM_ASHIFT +: MEM_ADDRW] < MEM_ADDRW'(`SMEM_BASE_ADDR >> MEM_ASHIFT));            
++                            & (full_addr[i][MEM_ASHIFT +: MEM_ADDRW] < MEM_ADDRW'(`SMEM_BASE_ADDR >> MEM_ASHIFT));
+             assign lsu_addr_type[i] = {is_addr_nc, is_addr_sm};
+         end else begin
+             assign lsu_addr_type[i] = is_addr_nc;
+@@ -73,10 +73,10 @@ module VX_lsu_unit #(
+ 
+     // fence stalls the pipeline until all pending requests are sent
+     wire fence_wait = lsu_req_if.is_fence && (req_valid || !mbuf_empty);
+-    
++
+     wire ready_in;
+-    wire stall_in = ~ready_in && req_valid; 
+-    
++    wire stall_in = ~ready_in && req_valid;
++
+     wire lsu_valid = lsu_req_if.valid && ~fence_wait;
+ 
+     wire lsu_wb = lsu_req_if.wb | lsu_req_if.is_prefetch;
+@@ -104,21 +104,21 @@ module VX_lsu_unit #(
+     wire rsp_is_dup;
+     wire rsp_is_prefetch;
+ 
+-    reg [`LSUQ_SIZE-1:0][`NUM_THREADS-1:0] rsp_rem_mask;         
++    reg [`LSUQ_SIZE-1:0][`NUM_THREADS-1:0] rsp_rem_mask;
+     wire [`NUM_THREADS-1:0] rsp_rem_mask_n;
+     wire [`NUM_THREADS-1:0] rsp_tmask;
+ 
+     reg [`NUM_THREADS-1:0] req_sent_mask;
+     reg is_req_start;
+ 
+-    wire [`LSUQ_ADDR_BITS-1:0] mbuf_waddr, mbuf_raddr;    
++    wire [`LSUQ_ADDR_BITS-1:0] mbuf_waddr, mbuf_raddr;
+     wire mbuf_full;
+ 
+     `UNUSED_VAR (rsp_type)
+     `UNUSED_VAR (rsp_is_prefetch)
+ 
+     wire [`NUM_THREADS-1:0][REQ_ASHIFT-1:0] req_offset, rsp_offset;
+-    for (genvar i = 0; i < `NUM_THREADS; i++) begin  
++    for (genvar i = 0; i < `NUM_THREADS; i++) begin
+         assign req_offset[i] = req_addr[i][1:0];
+     end
+ 
+@@ -130,13 +130,13 @@ module VX_lsu_unit #(
+ 
+     wire mbuf_push = ~mbuf_full
+                   && (| ({`NUM_THREADS{req_valid}} & req_tmask_dup & dcache_req_if.ready))
+-                  && is_req_start   // first submission only                  
++                  && is_req_start   // first submission only
+                   && req_wb;        // loads only
+ 
+     wire mbuf_pop = dcache_rsp_fire && (0 == rsp_rem_mask_n);
+-    
++
+     assign mbuf_raddr = dcache_rsp_if.tag[`CACHE_ADDR_TYPE_BITS +: `LSUQ_ADDR_BITS];
+-    `UNUSED_VAR (dcache_rsp_if.tag)    
++    `UNUSED_VAR (dcache_rsp_if.tag)
+ 
+     // do not writeback from software prefetch
+     wire req_wb2 = req_wb && ~req_is_prefetch;
+@@ -147,13 +147,13 @@ module VX_lsu_unit #(
+     ) req_metadata (
+         .clk          (clk),
+         .reset        (reset),
+-        .write_addr   (mbuf_waddr),  
+-        .acquire_slot (mbuf_push),       
++        .write_addr   (mbuf_waddr),
++        .acquire_slot (mbuf_push),
+         .read_addr    (mbuf_raddr),
+-        .write_data   ({req_uuid, req_wid, req_pc, req_tmask, req_rd, req_wb2, req_type, req_offset, req_is_dup, req_is_prefetch}),                    
++        .write_data   ({req_uuid, req_wid, req_pc, req_tmask, req_rd, req_wb2, req_type, req_offset, req_is_dup, req_is_prefetch}),
+         .read_data    ({rsp_uuid, rsp_wid, rsp_pc, rsp_tmask, rsp_rd, rsp_wb,  rsp_type, rsp_offset, rsp_is_dup, rsp_is_prefetch}),
+         .release_addr (mbuf_raddr),
+-        .release_slot (mbuf_pop),     
++        .release_slot (mbuf_pop),
+         .full         (mbuf_full),
+         .empty        (mbuf_empty)
+     );
+@@ -181,31 +181,31 @@ module VX_lsu_unit #(
+     reg [`LSUQ_ADDR_BITS-1:0] req_tag_hold;
+     wire [`LSUQ_ADDR_BITS-1:0] req_tag = is_req_start ? mbuf_waddr : req_tag_hold;
+     always @(posedge clk) begin
+-        if (mbuf_push) begin            
++        if (mbuf_push) begin
+             req_tag_hold <= mbuf_waddr;
+         end
+-    end    
++    end
+ 
+     assign rsp_rem_mask_n = rsp_rem_mask[mbuf_raddr] & ~dcache_rsp_if.tmask;
+ 
+     always @(posedge clk) begin
+         if (mbuf_push)  begin
+             rsp_rem_mask[mbuf_waddr] <= req_tmask_dup;
+-        end    
++        end
+         if (dcache_rsp_fire) begin
+             rsp_rem_mask[mbuf_raddr] <= rsp_rem_mask_n;
+         end
+     end
+ 
+     // ensure all dependencies for the requests are resolved
+-    wire req_dep_ready = (req_wb && ~(mbuf_full && is_req_start)) 
++    wire req_dep_ready = (req_wb && ~(mbuf_full && is_req_start))
+                       || (~req_wb && st_commit_if.ready);
+ 
+     // DCache Request
+ 
+     for (genvar i = 0; i < `NUM_THREADS; i++) begin
+ 
+-        reg [3:0]  mem_req_byteen;    
++        reg [3:0]  mem_req_byteen;
+         reg [31:0] mem_req_data;
+ 
+         always @(*) begin
+@@ -259,7 +259,7 @@ module VX_lsu_unit #(
+     reg [`NUM_THREADS-1:0][31:0] rsp_data;
+     wire [`NUM_THREADS-1:0] rsp_tmask_qual;
+ 
+-    for (genvar i = 0; i < `NUM_THREADS; i++) begin     
++    for (genvar i = 0; i < `NUM_THREADS; i++) begin
+         wire [31:0] rsp_data32 = (i == 0 || rsp_is_dup) ? dcache_rsp_if.data[0] : dcache_rsp_if.data[i];
+         wire [15:0] rsp_data16 = rsp_offset[i][1] ? rsp_data32[31:16] : rsp_data32[15:0];
+         wire [7:0]  rsp_data8  = rsp_offset[i][0] ? rsp_data16[15:8] : rsp_data16[7:0];
+@@ -272,15 +272,15 @@ module VX_lsu_unit #(
+             `INST_FMT_HU: rsp_data[i] = 32'(unsigned'(rsp_data16));
+             default: rsp_data[i] = rsp_data32;
+             endcase
+-        end        
+-    end   
++        end
++    end
+ 
+     assign rsp_tmask_qual = rsp_is_dup ? rsp_tmask : dcache_rsp_if.tmask;
+ 
+     // send load commit
+ 
+     wire load_rsp_stall = ~ld_commit_if.ready && ld_commit_if.valid;
+-    
++
+     VX_pipe_register #(
+         .DATAW  (1 + `UUID_BITS + `NW_BITS + `NUM_THREADS + 32 + `NR_BITS + 1 + (`NUM_THREADS * 32) + 1),
+         .RESETW (1)
+@@ -298,17 +298,17 @@ module VX_lsu_unit #(
+     // scope registration
+     `SCOPE_ASSIGN (dcache_req_fire,  dcache_req_fire);
+     `SCOPE_ASSIGN (dcache_req_uuid,  req_uuid);
+-    `SCOPE_ASSIGN (dcache_req_addr,  req_addr);    
++    `SCOPE_ASSIGN (dcache_req_addr,  req_addr);
+     `SCOPE_ASSIGN (dcache_req_rw,    ~req_wb);
+     `SCOPE_ASSIGN (dcache_req_byteen,dcache_req_if.byteen);
+     `SCOPE_ASSIGN (dcache_req_data,  dcache_req_if.data);
+     `SCOPE_ASSIGN (dcache_req_tag,   req_tag);
+     `SCOPE_ASSIGN (dcache_rsp_fire,  dcache_rsp_if.tmask & {`NUM_THREADS{dcache_rsp_fire}});
+-    `SCOPE_ASSIGN (dcache_rsp_uuid,  rsp_uuid);    
++    `SCOPE_ASSIGN (dcache_rsp_uuid,  rsp_uuid);
+     `SCOPE_ASSIGN (dcache_rsp_data,  dcache_rsp_if.data);
+     `SCOPE_ASSIGN (dcache_rsp_tag,   mbuf_raddr);
+ 
+-`ifndef SYNTHESIS
++`ifndef SEL_SYNTHESIS
+     reg [`LSUQ_SIZE-1:0][(`NW_BITS + 32 + `NR_BITS + `UUID_BITS + 64 + 1)-1:0] pending_reqs;
+     wire [63:0] delay_timeout = 10000 * (1 ** (`L2_ENABLE + `L3_ENABLE));
+ 
+@@ -316,7 +316,7 @@ module VX_lsu_unit #(
+         if (reset) begin
+             pending_reqs <= '0;
+         end begin
+-            if (mbuf_push) begin            
++            if (mbuf_push) begin
+                 pending_reqs[mbuf_waddr] <= {req_wid, req_pc, req_rd, req_uuid, $time, 1'b1};
+             end
+             if (mbuf_pop) begin
+@@ -325,21 +325,21 @@ module VX_lsu_unit #(
+         end
+ 
+         for (integer i = 0; i < `LSUQ_SIZE; ++i) begin
+-            if (pending_reqs[i][0]) begin 
+-                `ASSERT(($time - pending_reqs[i][1 +: 64]) < delay_timeout, 
+-                    ("%t: *** D$%0d response timeout: remaining=%b, wid=%0d, PC=%0h, rd=%0d (#%0d)", 
+-                        $time, CORE_ID, rsp_rem_mask[i], pending_reqs[i][1+64+`UUID_BITS+`NR_BITS+32 +: `NW_BITS], 
+-                                                         pending_reqs[i][1+64+`UUID_BITS+`NR_BITS +: 32], 
++            if (pending_reqs[i][0]) begin
++                `ASSERT(($time - pending_reqs[i][1 +: 64]) < delay_timeout,
++                    ("%t: *** D$%0d response timeout: remaining=%b, wid=%0d, PC=%0h, rd=%0d (#%0d)",
++                        $time, CORE_ID, rsp_rem_mask[i], pending_reqs[i][1+64+`UUID_BITS+`NR_BITS+32 +: `NW_BITS],
++                                                         pending_reqs[i][1+64+`UUID_BITS+`NR_BITS +: 32],
+                                                          pending_reqs[i][1+64+`UUID_BITS +: `NR_BITS],
+                                                          pending_reqs[i][1+64 +: `UUID_BITS]));
+             end
+         end
+     end
+ `endif
+-    
++
+ `ifdef DBG_TRACE_CORE_DCACHE
+     wire dcache_req_fire_any = (| dcache_req_fire);
+-    always @(posedge clk) begin    
++    always @(posedge clk) begin
+         if (lsu_req_if.valid && fence_wait) begin
+             dpi_trace("%d: *** D$%0d fence wait\n", $time, CORE_ID);
+         end
+@@ -361,12 +361,12 @@ module VX_lsu_unit #(
+             end
+         end
+         if (dcache_rsp_fire) begin
+-            dpi_trace("%d: D$%0d Rsp: prefetch=%b, wid=%0d, PC=%0h, tmask=%b, tag=%0h, rd=%0d, data=", 
++            dpi_trace("%d: D$%0d Rsp: prefetch=%b, wid=%0d, PC=%0h, tmask=%b, tag=%0h, rd=%0d, data=",
+                 $time, CORE_ID, rsp_is_prefetch, rsp_wid, rsp_pc, dcache_rsp_if.tmask, mbuf_raddr, rsp_rd);
+             `TRACE_ARRAY1D(dcache_rsp_if.data, `NUM_THREADS);
+             dpi_trace(", is_dup=%b (#%0d)\n", rsp_is_dup, rsp_uuid);
+         end
+     end
+ `endif
+-    
++
+ endmodule
+\ No newline at end of file
 diff --git a/hw/rtl/VX_platform.vh b/hw/rtl/VX_platform.vh
-index 908428b7..1b751308 100644
+index 908428b7..3036f0c8 100644
 --- a/hw/rtl/VX_platform.vh
 +++ b/hw/rtl/VX_platform.vh
-@@ -1,6 +1,8 @@
+@@ -1,7 +1,9 @@
  `ifndef VX_PLATFORM
  `define VX_PLATFORM
  
-+`define SYNTHESIS
+-`ifndef SYNTHESIS
++`define SEL_SYNTHESIS
 +
- `ifndef SYNTHESIS
++`ifndef SEL_SYNTHESIS
  `include "util_dpi.vh"
  `endif
+ 
+@@ -9,7 +11,7 @@
+ 
+ ///////////////////////////////////////////////////////////////////////////////
+ 
+-`ifndef SYNTHESIS
++`ifndef SEL_SYNTHESIS
+ 
+ `ifndef NDEBUG
+     `define DEBUG_BLOCK(x) /* verilator lint_off UNUSED */ \
+@@ -70,7 +72,7 @@
+ `define TRACING_ON  /* verilator tracing_on */
+ `define TRACING_OFF /* verilator tracing_off */
+ 
+-`else // SYNTHESIS
++`else // SEL_SYNTHESIS
+ 
+ `define DEBUG_BLOCK(x)
+ `define IGNORE_UNUSED_BEGIN
+@@ -87,7 +89,7 @@
+ `define TRACING_ON
+ `define TRACING_OFF
+ 
+-`endif // SYNTHESIS
++`endif // SEL_SYNTHESIS
+ 
+ ///////////////////////////////////////////////////////////////////////////////
+ 
 diff --git a/hw/rtl/fp_cores/VX_fpu_define.vh b/hw/rtl/fp_cores/VX_fpu_define.vh
-index d764e8e4..356c7762 100644
+index d764e8e4..fe3fccdd 100644
 --- a/hw/rtl/fp_cores/VX_fpu_define.vh
 +++ b/hw/rtl/fp_cores/VX_fpu_define.vh
-@@ -1,6 +1,8 @@
+@@ -1,9 +1,11 @@
  `ifndef VX_FPU_DEFINE
  `define VX_FPU_DEFINE
  
-+`define SYNTHESIS
++`define SEL_SYNTHESIS
 +
  `include "VX_define.vh"
  
- `ifndef SYNTHESIS
+-`ifndef SYNTHESIS
++`ifndef SEL_SYNTHESIS
+ `include "float_dpi.vh"
+ `endif
+ 
+diff --git a/hw/rtl/libs/VX_dp_ram.sv b/hw/rtl/libs/VX_dp_ram.sv
+index 7b39246f..224f41f3 100644
+--- a/hw/rtl/libs/VX_dp_ram.sv
++++ b/hw/rtl/libs/VX_dp_ram.sv
+@@ -12,10 +12,10 @@ module VX_dp_ram #(
+     parameter INIT_ENABLE = 0,
+     parameter INIT_FILE   = "",
+     parameter [DATAW-1:0] INIT_VALUE = 0
+-) ( 
++) (
+     input wire               clk,
+     input wire [BYTEENW-1:0] wren,
+-    input wire [ADDRW-1:0]   waddr,        
++    input wire [ADDRW-1:0]   waddr,
+     input wire [DATAW-1:0]   wdata,
+     input wire [ADDRW-1:0]   raddr,
+     output wire [DATAW-1:0]  rdata
+@@ -23,26 +23,13 @@ module VX_dp_ram #(
+ 
+     `STATIC_ASSERT((1 == BYTEENW) || ((BYTEENW > 1) && 0 == (BYTEENW % 4)), ("invalid parameter"))
+ 
+-`define RAM_INITIALIZATION                        \
+-    if (INIT_ENABLE) begin                        \
+-        if (INIT_FILE != "") begin                \
+-            initial $readmemh(INIT_FILE, ram);    \
+-        end else begin                            \
+-            initial                               \
+-                for (integer i = 0; i < SIZE; ++i)\
+-                    ram[i] = INIT_VALUE;          \
+-        end                                       \
+-    end
+-
+-`ifdef SYNTHESIS
++`ifdef SEL_SYNTHESIS
+     if (LUTRAM) begin
+-        if (OUT_REG) begin        
++        if (OUT_REG) begin
+             reg [DATAW-1:0] rdata_r;
+             if (BYTEENW > 1) begin
+                 `USE_FAST_BRAM reg [BYTEENW-1:0][7:0] ram [SIZE-1:0];
+ 
+-                `RAM_INITIALIZATION
+-
+                 always @(posedge clk) begin
+                     for (integer i = 0; i < BYTEENW; i++) begin
+                         if (wren[i])
+@@ -53,8 +40,6 @@ module VX_dp_ram #(
+             end else begin
+                 `USE_FAST_BRAM reg [DATAW-1:0] ram [SIZE-1:0];
+ 
+-                `RAM_INITIALIZATION
+-
+                 always @(posedge clk) begin
+                     if (wren)
+                         ram[waddr] <= wdata;
+@@ -66,8 +51,6 @@ module VX_dp_ram #(
+             if (BYTEENW > 1) begin
+                 `USE_FAST_BRAM reg [BYTEENW-1:0][7:0] ram [SIZE-1:0];
+ 
+-                `RAM_INITIALIZATION
+-
+                 always @(posedge clk) begin
+                     for (integer i = 0; i < BYTEENW; i++) begin
+                         if (wren[i])
+@@ -78,14 +61,12 @@ module VX_dp_ram #(
+             end else begin
+                 `USE_FAST_BRAM reg [DATAW-1:0] ram [SIZE-1:0];
+ 
+-                `RAM_INITIALIZATION
+-
+                 always @(posedge clk) begin
+                     if (wren)
+                         ram[waddr] <= wdata;
+                 end
+                 assign rdata = ram[raddr];
+-            end         
++            end
+         end
+     end else begin
+         if (OUT_REG) begin
+@@ -94,8 +75,6 @@ module VX_dp_ram #(
+             if (BYTEENW > 1) begin
+                 reg [BYTEENW-1:0][7:0] ram [SIZE-1:0];
+ 
+-                `RAM_INITIALIZATION
+-
+                 always @(posedge clk) begin
+                     for (integer i = 0; i < BYTEENW; i++) begin
+                         if (wren[i])
+@@ -106,8 +85,6 @@ module VX_dp_ram #(
+             end else begin
+                 reg [DATAW-1:0] ram [SIZE-1:0];
+ 
+-                `RAM_INITIALIZATION
+-
+                 always @(posedge clk) begin
+                     if (wren)
+                         ram[waddr] <= wdata;
+@@ -120,8 +97,6 @@ module VX_dp_ram #(
+                 if (BYTEENW > 1) begin
+                     `NO_RW_RAM_CHECK reg [BYTEENW-1:0][7:0] ram [SIZE-1:0];
+ 
+-                    `RAM_INITIALIZATION
+-
+                     always @(posedge clk) begin
+                         for (integer i = 0; i < BYTEENW; i++) begin
+                             if (wren[i])
+@@ -132,8 +107,6 @@ module VX_dp_ram #(
+                 end else begin
+                     `NO_RW_RAM_CHECK reg [DATAW-1:0] ram [SIZE-1:0];
+ 
+-                    `RAM_INITIALIZATION
+-
+                     always @(posedge clk) begin
+                         if (wren)
+                             ram[waddr] <= wdata;
+@@ -144,8 +117,6 @@ module VX_dp_ram #(
+                 if (BYTEENW > 1) begin
+                     reg [BYTEENW-1:0][7:0] ram [SIZE-1:0];
+ 
+-                    `RAM_INITIALIZATION
+-
+                     always @(posedge clk) begin
+                         for (integer i = 0; i < BYTEENW; i++) begin
+                             if (wren[i])
+@@ -156,14 +127,12 @@ module VX_dp_ram #(
+                 end else begin
+                     reg [DATAW-1:0] ram [SIZE-1:0];
+ 
+-                    `RAM_INITIALIZATION
+-
+                     always @(posedge clk) begin
+                         if (wren)
+                             ram[waddr] <= wdata;
+                     end
+                     assign rdata = ram[raddr];
+-                end                
++                end
+             end
+         end
+     end
+@@ -173,8 +142,6 @@ module VX_dp_ram #(
+         if (BYTEENW > 1) begin
+             reg [BYTEENW-1:0][7:0] ram [SIZE-1:0];
+ 
+-            `RAM_INITIALIZATION
+-
+             always @(posedge clk) begin
+                 for (integer i = 0; i < BYTEENW; i++) begin
+                     if (wren[i])
+@@ -185,8 +152,6 @@ module VX_dp_ram #(
+         end else begin
+             reg [DATAW-1:0] ram [SIZE-1:0];
+ 
+-            `RAM_INITIALIZATION
+-
+             always @(posedge clk) begin
+                 if (wren)
+                     ram[waddr] <= wdata;
+@@ -201,8 +166,6 @@ module VX_dp_ram #(
+             reg [ADDRW-1:0] prev_waddr;
+             reg prev_write;
+ 
+-            `RAM_INITIALIZATION
+-
+             always @(posedge clk) begin
+                 for (integer i = 0; i < BYTEENW; i++) begin
+                     if (wren[i])
+@@ -212,7 +175,7 @@ module VX_dp_ram #(
+                 prev_data  <= ram[waddr];
+                 prev_waddr <= waddr;
+             end
+-            
++
+             if (LUTRAM || !NO_RWCHECK) begin
+                 `UNUSED_VAR (prev_write)
+                 `UNUSED_VAR (prev_data)
+@@ -227,8 +190,6 @@ module VX_dp_ram #(
+             reg [ADDRW-1:0] prev_waddr;
+             reg prev_write;
+ 
+-            `RAM_INITIALIZATION
+-
+             always @(posedge clk) begin
+                 if (wren)
+                     ram[waddr] <= wdata;
+diff --git a/hw/rtl/libs/VX_popcount.sv b/hw/rtl/libs/VX_popcount.sv
+index b1500af4..c724db3c 100644
+--- a/hw/rtl/libs/VX_popcount.sv
++++ b/hw/rtl/libs/VX_popcount.sv
+@@ -4,14 +4,14 @@
+ module VX_popcount #(
+     parameter MODEL = 1,
+     parameter N     = 1,
+-    parameter M     = $clog2(N+1) 
++    parameter M     = $clog2(N+1)
+ ) (
+     input  wire [N-1:0] in_i,
+     output wire [M-1:0] cnt_o
+ );
+     `UNUSED_PARAM (MODEL)
+ 
+-`ifndef SYNTHESIS
++`ifndef SEL_SYNTHESIS
+     assign cnt_o = $countones(in_i);
+ `else
+ `ifdef QUARTUS
+@@ -25,14 +25,14 @@ module VX_popcount #(
+     `IGNORE_WARNINGS_BEGIN
+         localparam PN    = 1 << $clog2(N);
+         localparam LOGPN = $clog2(PN);
+-        
++
+         wire [M-1:0] tmp [0:PN-1] [0:PN-1];
+-        
+-        for (genvar i = 0; i < N; ++i) begin        
++
++        for (genvar i = 0; i < N; ++i) begin
+             assign tmp[0][i] = in_i[i];
+         end
+ 
+-        for (genvar i = N; i < PN; ++i) begin        
++        for (genvar i = N; i < PN; ++i) begin
+             assign tmp[0][i] = '0;
+         end
+ 
+@@ -58,7 +58,7 @@ module VX_popcount #(
+         end
+ 
+         assign cnt_o = cnt_r;
+-    
++
+     end
+ `endif
+ `endif
+diff --git a/hw/rtl/libs/VX_sp_ram.sv b/hw/rtl/libs/VX_sp_ram.sv
+index 2ed01d0d..0d8df0ba 100644
+--- a/hw/rtl/libs/VX_sp_ram.sv
++++ b/hw/rtl/libs/VX_sp_ram.sv
+@@ -12,7 +12,7 @@ module VX_sp_ram #(
+     parameter INIT_ENABLE = 0,
+     parameter INIT_FILE   = "",
+     parameter [DATAW-1:0] INIT_VALUE = 0
+-) (  
++) (
+     input wire               clk,
+     input wire [ADDRW-1:0]   addr,
+     input wire [BYTEENW-1:0] wren,
+@@ -22,27 +22,14 @@ module VX_sp_ram #(
+ 
+     `STATIC_ASSERT((1 == BYTEENW) || ((BYTEENW > 1) && 0 == (BYTEENW % 4)), ("invalid parameter"))
+ 
+-`define RAM_INITIALIZATION                        \
+-    if (INIT_ENABLE) begin                        \
+-        if (INIT_FILE != "") begin                \
+-            initial $readmemh(INIT_FILE, ram);    \
+-        end else begin                            \
+-            initial                               \
+-                for (integer i = 0; i < SIZE; ++i)\
+-                    ram[i] = INIT_VALUE;          \
+-        end                                       \
+-    end
+-
+-`ifdef SYNTHESIS
++`ifdef SEL_SYNTHESIS
+     if (LUTRAM) begin
+-        if (OUT_REG) begin        
++        if (OUT_REG) begin
+             reg [DATAW-1:0] rdata_r;
+ 
+             if (BYTEENW > 1) begin
+                 `USE_FAST_BRAM reg [BYTEENW-1:0][7:0] ram [SIZE-1:0];
+ 
+-                `RAM_INITIALIZATION
+-
+                 always @(posedge clk) begin
+                     for (integer i = 0; i < BYTEENW; i++) begin
+                         if (wren[i])
+@@ -53,8 +40,6 @@ module VX_sp_ram #(
+             end else begin
+                 `USE_FAST_BRAM reg [DATAW-1:0] ram [SIZE-1:0];
+ 
+-                `RAM_INITIALIZATION
+-
+                 always @(posedge clk) begin
+                     if (wren)
+                         ram[addr] <= wdata;
+@@ -66,8 +51,6 @@ module VX_sp_ram #(
+             if (BYTEENW > 1) begin
+                 `USE_FAST_BRAM reg [BYTEENW-1:0][7:0] ram [SIZE-1:0];
+ 
+-               `RAM_INITIALIZATION
+-
+                 always @(posedge clk) begin
+                     for (integer i = 0; i < BYTEENW; i++) begin
+                         if (wren[i])
+@@ -78,14 +61,12 @@ module VX_sp_ram #(
+             end else begin
+                 `USE_FAST_BRAM reg [DATAW-1:0] ram [SIZE-1:0];
+ 
+-                `RAM_INITIALIZATION
+-
+                 always @(posedge clk) begin
+                     if (wren)
+                         ram[addr] <= wdata;
+                 end
+                 assign rdata = ram[addr];
+-            end         
++            end
+         end
+     end else begin
+         if (OUT_REG) begin
+@@ -94,8 +75,6 @@ module VX_sp_ram #(
+             if (BYTEENW > 1) begin
+                 reg [BYTEENW-1:0][7:0] ram [SIZE-1:0];
+ 
+-                `RAM_INITIALIZATION
+-
+                 always @(posedge clk) begin
+                     for (integer i = 0; i < BYTEENW; i++) begin
+                         if (wren[i])
+@@ -106,8 +85,6 @@ module VX_sp_ram #(
+             end else begin
+                 reg [DATAW-1:0] ram [SIZE-1:0];
+ 
+-               `RAM_INITIALIZATION
+-
+                 always @(posedge clk) begin
+                     if (wren)
+                         ram[addr] <= wdata;
+@@ -120,8 +97,6 @@ module VX_sp_ram #(
+                 if (BYTEENW > 1) begin
+                     `NO_RW_RAM_CHECK reg [BYTEENW-1:0][7:0] ram [SIZE-1:0];
+ 
+-                    `RAM_INITIALIZATION
+-
+                     always @(posedge clk) begin
+                         for (integer i = 0; i < BYTEENW; i++) begin
+                             if (wren[i])
+@@ -132,8 +107,6 @@ module VX_sp_ram #(
+                 end else begin
+                     `NO_RW_RAM_CHECK reg [DATAW-1:0] ram [SIZE-1:0];
+ 
+-                    `RAM_INITIALIZATION
+-
+                     always @(posedge clk) begin
+                         if (wren)
+                             ram[addr] <= wdata;
+@@ -144,9 +117,7 @@ module VX_sp_ram #(
+                 if (BYTEENW > 1) begin
+                     reg [BYTEENW-1:0][7:0] ram [SIZE-1:0];
+ 
+-                    `RAM_INITIALIZATION
+-
+-                    always @(posedge clk) begin                        
++                    always @(posedge clk) begin
+                         for (integer i = 0; i < BYTEENW; i++) begin
+                             if (wren[i])
+                                 ram[addr][i] <= wdata[i * 8 +: 8];
+@@ -156,14 +127,12 @@ module VX_sp_ram #(
+                 end else begin
+                     reg [DATAW-1:0] ram [SIZE-1:0];
+ 
+-                    `RAM_INITIALIZATION  
+-
+                     always @(posedge clk) begin
+                         if (wren)
+                             ram[addr] <= wdata;
+                     end
+                     assign rdata = ram[addr];
+-                end                
++                end
+             end
+         end
+     end
+@@ -173,8 +142,6 @@ module VX_sp_ram #(
+         if (BYTEENW > 1) begin
+             reg [BYTEENW-1:0][7:0] ram [SIZE-1:0];
+ 
+-            `RAM_INITIALIZATION
+-
+             always @(posedge clk) begin
+                 for (integer i = 0; i < BYTEENW; i++) begin
+                     if (wren[i])
+@@ -185,8 +152,6 @@ module VX_sp_ram #(
+         end else begin
+             reg [DATAW-1:0] ram [SIZE-1:0];
+ 
+-            `RAM_INITIALIZATION
+-
+             always @(posedge clk) begin
+                 if (wren)
+                     ram[addr] <= wdata;
+@@ -201,8 +166,6 @@ module VX_sp_ram #(
+             reg [ADDRW-1:0] prev_addr;
+             reg prev_write;
+ 
+-            `RAM_INITIALIZATION
+-
+             always @(posedge clk) begin
+                 for (integer i = 0; i < BYTEENW; i++) begin
+                     if (wren[i])
+@@ -212,7 +175,7 @@ module VX_sp_ram #(
+                 prev_data  <= ram[addr];
+                 prev_addr  <= addr;
+             end
+-            
++
+             if (LUTRAM || !NO_RWCHECK) begin
+                 `UNUSED_VAR (prev_write)
+                 `UNUSED_VAR (prev_data)
+@@ -227,8 +190,6 @@ module VX_sp_ram #(
+             reg [ADDRW-1:0] prev_addr;
+             reg prev_write;
+ 
+-            `RAM_INITIALIZATION  
+-
+             always @(posedge clk) begin
+                 if (wren)
+                     ram[addr] <= wdata;
+@@ -246,7 +207,7 @@ module VX_sp_ram #(
+             end
+         end
+     end
+-`endif    
++`endif
+ 
+ endmodule
+ `TRACING_ON
+\ No newline at end of file
 diff --git a/hw/rtl/tex_unit/VX_tex_addr.sv b/hw/rtl/tex_unit/VX_tex_addr.sv
 index 87da9cef..e3bfb5c0 100644
 --- a/hw/rtl/tex_unit/VX_tex_addr.sv
@@ -316,3 +1083,29 @@ index 87da9cef..e3bfb5c0 100644
                      $time, CORE_ID, rsp_wid, rsp_PC, rsp_tmask, rsp_filter, rsp_lgstride);
              `TRACE_ARRAY2D(rsp_addr, 4, NUM_REQS);
              dpi_trace("\n");
+diff --git a/hw/rtl/tex_unit/VX_tex_define.vh b/hw/rtl/tex_unit/VX_tex_define.vh
+index 381069fc..a3e1a926 100644
+--- a/hw/rtl/tex_unit/VX_tex_define.vh
++++ b/hw/rtl/tex_unit/VX_tex_define.vh
+@@ -32,20 +32,4 @@
+ `define TEX_FORMAT_L8       `TEX_FORMAT_BITS'(5)
+ `define TEX_FORMAT_A8       `TEX_FORMAT_BITS'(6)
+ 
+-task trace_tex_state (
+-    input [`CSR_ADDR_BITS-1:0] state
+-);
+-    case (state)
+-        `CSR_TEX_ADDR: dpi_trace("ADDR");     
+-        `CSR_TEX_WIDTH: dpi_trace("WIDTH");
+-        `CSR_TEX_HEIGHT: dpi_trace("HEIGHT");
+-        `CSR_TEX_FORMAT: dpi_trace("FORMAT");
+-        `CSR_TEX_FILTER: dpi_trace("FILTER");
+-        `CSR_TEX_WRAPU: dpi_trace("WRAPU");
+-        `CSR_TEX_WRAPV: dpi_trace("WRAPV");
+-        //`CSR_TEX_MIPOFF
+-        default: dpi_trace("MIPOFF");
+-    endcase  
+-endtask
+-
+ `endif
+\ No newline at end of file
