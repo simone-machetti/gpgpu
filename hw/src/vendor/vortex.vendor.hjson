@@ -11,7 +11,7 @@
   target_dir: "vortex",
 
   upstream: {
-    url: "https://github.com/vortexgpgpu/vortex",
+    url: "git@github.com:simone-machetti/vortex.git",
     rev: "d69a64c32ceaee5afdc6da3d74a5b6dcbb2fe5b5",
   },
 

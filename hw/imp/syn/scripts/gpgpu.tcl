@@ -9,7 +9,7 @@ source $env(GPGPU_HOME)/hw/imp/syn/scripts/compile_gpgpu.tcl
 elaborate gpgpu_top
 link
 
-create_clock -name "clk" -period 1000 [ get_ports clk ]
+create_clock -name "clk" -period 1000 [ get_ports clk_i ]
 
 write -f ddc -hierarchy -output precompiled.ddc
 

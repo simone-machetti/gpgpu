@@ -7,8 +7,10 @@
 remove_design -all
 
 set target_library {}
-set target_library "/dkits/tsmc/65nm/IP_65nm/LP/STDCELL_IO/tapeoutPackage/Front_End/timing_power_noise/CCS/tcbn65lplvt_200a/tcbn65lplvttc_ccs.db"
-set link_library "/dkits/tsmc/65nm/IP_65nm/LP/STDCELL_IO/tapeoutPackage/Front_End/timing_power_noise/CCS/tcbn65lplvt_200a/tcbn65lplvttc_ccs.db"
+set target_library "/dkits/tsmc/16nm/crn16ffcll/IPs/digital/Front_End/timing_power_noise/CCS/tcbn16ffcllbwp16p90_100a/tcbn16ffcllbwp16p90ssgnp0p72v125c_ccs.db"
+set link_library "/dkits/tsmc/16nm/crn16ffcll/IPs/digital/Front_End/timing_power_noise/CCS/tcbn16ffcllbwp16p90_100a/tcbn16ffcllbwp16p90ssgnp0p72v125c_ccs.db"
+
+set search_path [list $env(GPGPU_HOME)/hw/src/rtl/include $env(GPGPU_HOME)/hw/src/vendor/vortex/hw/rtl $env(GPGPU_HOME)/hw/src/vendor/vortex/hw/rtl/tex_unit $env(GPGPU_HOME)/hw/src/vendor/vortex/hw/rtl/libs $env(GPGPU_HOME)/hw/src/vendor/vortex/hw/rtl/interfaces $env(GPGPU_HOME)/hw/src/vendor/vortex/hw/rtl/fp_cores $env(GPGPU_HOME)/hw/src/vendor/vortex/hw/rtl/cache]
 
 # /hw/src/vendor/vortex/hw/rtl/cache
 analyze -format sverilog -work work $env(GPGPU_HOME)/hw/src/vendor/vortex/hw/rtl/cache/VX_tag_access.sv
@@ -149,15 +151,15 @@ analyze -format sverilog -work work $env(GPGPU_HOME)/hw/src/rtl/mem_hier_cache/m
 # /hw/src/rtl/mem_hier_scratchpad/include
 analyze -format sverilog -work work $env(GPGPU_HOME)/hw/src/rtl/mem_hier_scratchpad/include/mem_map_pkg.sv
 
-# /hw/src/vendor/pulp_platform_common_cells/src
-analyze -format sverilog -work work $env(GPGPU_HOME)/hw/src/vendor/pulp_platform_common_cells/src/rr_arb_tree.sv
-analyze -format sverilog -work work $env(GPGPU_HOME)/hw/src/vendor/pulp_platform_common_cells/src/lzc.sv
-analyze -format sverilog -work work $env(GPGPU_HOME)/hw/src/vendor/pulp_platform_common_cells/src/cf_math_pkg.sv
-analyze -format sverilog -work work $env(GPGPU_HOME)/hw/src/vendor/pulp_platform_common_cells/src/addr_decode.sv
+# /hw/src/vendor/common_cells/src
+analyze -format sverilog -work work $env(GPGPU_HOME)/hw/src/vendor/common_cells/src/rr_arb_tree.sv
+analyze -format sverilog -work work $env(GPGPU_HOME)/hw/src/vendor/common_cells/src/cf_math_pkg.sv
+analyze -format sverilog -work work $env(GPGPU_HOME)/hw/src/vendor/common_cells/src/lzc.sv
+analyze -format sverilog -work work $env(GPGPU_HOME)/hw/src/vendor/common_cells/src/addr_decode.sv
 
-# /hw/src/vendor/pulp_platform_cluster_interconnect/rtl/tcdm_variable_latency_interconnect
-analyze -format sverilog -work work $env(GPGPU_HOME)/hw/src/vendor/pulp_platform_cluster_interconnect/rtl/tcdm_variable_latency_interconnect/addr_dec_resp_mux_varlat.sv
-analyze -format sverilog -work work $env(GPGPU_HOME)/hw/src/vendor/pulp_platform_cluster_interconnect/rtl/tcdm_variable_latency_interconnect/xbar_varlat.sv
+# /hw/src/vendor/cluster_interconnect/rtl/tcdm_variable_latency_interconnect
+analyze -format sverilog -work work $env(GPGPU_HOME)/hw/src/vendor/cluster_interconnect/rtl/tcdm_variable_latency_interconnect/addr_dec_resp_mux_varlat.sv
+analyze -format sverilog -work work $env(GPGPU_HOME)/hw/src/vendor/cluster_interconnect/rtl/tcdm_variable_latency_interconnect/xbar_varlat.sv
 
 # /hw/src/rtl/mem_hier_scratchpad
 analyze -format sverilog -work work $env(GPGPU_HOME)/hw/src/rtl/mem_hier_scratchpad/vx_icache_to_obi_bridge.sv

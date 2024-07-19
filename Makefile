@@ -84,3 +84,8 @@ clean:
 	rm -rf $(GPGPU_HOME)/sw/apps/$(APP_NAME)/transcript
 	rm -rf $(GPGPU_HOME)/hw/imp/sim/input
 	rm -rf $(GPGPU_HOME)/hw/imp/sim/output
+
+clean-syn:
+	rm -rf $(GPGPU_HOME)/hw/imp/syn/work
+	rm -rf $(GPGPU_HOME)/hw/imp/syn/output
+	rm -rf $(GPGPU_HOME)/hw/imp/syn/report

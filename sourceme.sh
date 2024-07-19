@@ -17,3 +17,9 @@ export PATH="/gpgpu_tools/qsta/2020.4/linux_x86_64:$PATH"
 
 # Questa license
 export MGLS_LICENSE_FILE=1717@edalicsrv.epfl.ch
+
+# Design Compiler path
+export PATH=/softs/synopsys/site/bin:/softs/synopsys/sold:/softs/synopsys/dc/2020.09/bin:/softs/synopsys/lc/2020.09/bin/:$PATH
+
+# Design Compiler license
+export SNPSLMD_LICENSE_FILE=27020@edalicsrv.epfl.ch
